@@ -15,7 +15,13 @@ def flash_attn_func_op(
 
 
 def flash_attn_func(q, k, v):
-    dtype = torch.float8_e4m3fn
+    # FlashAttention-3 supports FP8 only on Hopper architecture (Compute Capability 9.0+)
+    # For Ampere (8.0) and Ada (8.9) cards, it supports fp16 and bf16.
+    if torch.cuda.get_device_properties(q.device).major >= 9: 
+        dtype = torch.float8_e4m3fn
+    else:
+        dtype = q.dtype
+
     return flash_attn_func_op(q.to(dtype), k.to(dtype), v.to(dtype)).to(q.dtype)
 
 
